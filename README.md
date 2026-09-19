@@ -49,6 +49,10 @@ publisher. Category filters can be combined, and the publisher filter can be
 used with them to narrow results further. Filtering happens in the browser so
 it works with the fully prerendered static site.
 
+The catalog is split into six-game static pages. Use the numbered, Previous, and
+Next links below the catalog to browse additional pages; filters apply to the
+games shown on the current page.
+
 ## Database
 
 The SQLite database is built from `db/games.csv` — there is no live data to migrate.

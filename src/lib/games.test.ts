@@ -6,6 +6,7 @@ import {
     getAllGames,
     getAllGameIds,
     getGames,
+    getGamesPage,
     getGameById,
 } from './games';
 
@@ -44,6 +45,31 @@ describe('games data-access helpers', () => {
         expect(all.map((g) => g.title)).toEqual(['Game 01', 'Game 02', 'Game 03']);
         expect(all[0].category).toEqual({ id: expect.any(Number), name: 'Strategy' });
         expect(all[0].publisher).toEqual({ id: expect.any(Number), name: 'Pub One' });
+    });
+
+    it('returns a bounded page with deterministic metadata', async () => {
+        await seedGames(db, 7);
+
+        const page = await getGamesPage(db, 2, 3);
+
+        expect(page.totalGames).toBe(7);
+        expect(page.totalPages).toBe(3);
+        expect(page.page).toBe(2);
+        expect(page.games.map((game) => game.title)).toEqual([
+            'Game 04',
+            'Game 05',
+            'Game 06',
+        ]);
+    });
+
+    it('clamps invalid page numbers to the available page range', async () => {
+        await seedGames(db, 2);
+
+        const page = await getGamesPage(db, 99, 3);
+
+        expect(page.page).toBe(1);
+        expect(page.totalPages).toBe(1);
+        expect(page.games).toHaveLength(2);
     });
 
     it('returns all game ids ordered by title', async () => {
