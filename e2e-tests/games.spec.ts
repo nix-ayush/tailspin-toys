@@ -47,6 +47,24 @@ test.describe('Game Listing and Navigation', () => {
     });
   });
 
+  test('should search games by title', async ({ page }) => {
+    await page.goto('/');
+    const firstTitle = await page.getByTestId('game-title').first().textContent();
+    expect(firstTitle).not.toBeNull();
+
+    await test.step('Search case-insensitively by title', async () => {
+      await page.getByTestId('game-search').fill(firstTitle?.slice(0, 4).toUpperCase() ?? '');
+      await expect(page.locator('[data-testid="game-card"]:not(.hidden)')).toHaveCount(1);
+      await expect(page.locator('[data-testid="game-card"]:not(.hidden)').first()).toContainText(firstTitle ?? '');
+    });
+
+    await test.step('Show an empty state for no matches', async () => {
+      await page.getByTestId('game-search').fill('no matching game title');
+      await expect(page.locator('[data-testid="game-card"]:not(.hidden)')).toHaveCount(0);
+      await expect(page.getByTestId('filtered-empty-state')).toBeVisible();
+    });
+  });
+
   test('should display games with titles on index page', async ({ page }) => {
     await test.step('Navigate to homepage', async () => {
       await page.goto('/');
