@@ -1,6 +1,29 @@
 import { test, expect, type Response } from '@playwright/test';
 
 test.describe('Game Listing and Navigation', () => {
+  test('should filter games by category and publisher', async ({ page }) => {
+    await page.goto('/');
+    const gameCards = page.getByTestId('game-card');
+    const firstCard = gameCards.first();
+    const categoryId = await firstCard.getAttribute('data-category-id');
+    const publisherId = await firstCard.getAttribute('data-publisher-id');
+    expect(categoryId).not.toBeNull();
+    expect(publisherId).not.toBeNull();
+
+    await test.step('Select a category and publisher', async () => {
+      await page.getByTestId(`category-filter-${categoryId}`).check();
+      await page.getByTestId('publisher-filter').selectOption(publisherId ?? '');
+    });
+
+    await test.step('Verify only matching cards remain visible', async () => {
+      await expect(page.locator('[data-testid="game-card"]:not(.hidden)').first()).toBeVisible();
+      await expect(page.locator('[data-testid="game-card"]:not(.hidden)')).toHaveCount(
+        await page.locator(`[data-testid="game-card"][data-category-id="${categoryId}"][data-publisher-id="${publisherId}"]`).count(),
+      );
+      await expect(page.getByTestId('filtered-empty-state')).toBeHidden();
+    });
+  });
+
   test('should display games with titles on index page', async ({ page }) => {
     await test.step('Navigate to homepage', async () => {
       await page.goto('/');
