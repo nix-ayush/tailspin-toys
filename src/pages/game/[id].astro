@@ -61,6 +61,23 @@ if (!game) {
           </div>
         </div>
 
+        {(game.category?.description || game.publisher?.description) && (
+          <section class="mt-8 grid gap-4 sm:grid-cols-2" aria-label="Game context">
+            {game.category?.description && (
+              <div class="rounded-lg border border-slate-700 bg-slate-900/40 p-4" data-testid="game-details-category-description">
+                <h2 class="text-sm font-semibold uppercase tracking-wide text-blue-300">About the category</h2>
+                <p class="mt-2 text-slate-400">{game.category.description}</p>
+              </div>
+            )}
+            {game.publisher?.description && (
+              <div class="rounded-lg border border-slate-700 bg-slate-900/40 p-4" data-testid="game-details-publisher-description">
+                <h2 class="text-sm font-semibold uppercase tracking-wide text-purple-300">About the publisher</h2>
+                <p class="mt-2 text-slate-400">{game.publisher.description}</p>
+              </div>
+            )}
+          </section>
+        )}
+
         <div class="mt-8">
           <Button variant="gradient" fullWidth data-testid="back-game-button">
             <Heart class="h-5 w-5 mr-2" aria-hidden="true" />

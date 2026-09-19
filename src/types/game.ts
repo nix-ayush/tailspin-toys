@@ -15,6 +15,7 @@ export interface Publisher {
 export interface Category {
     id: number;
     name: string;
+    description?: string | null;
 }
 
 /** Represents a game with its related category and publisher. */

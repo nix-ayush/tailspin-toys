@@ -86,7 +86,11 @@ describe('games data-access helpers', () => {
         await seedGames(db, 3);
         const all = await getAllGames(db);
         expect(all.map((g) => g.title)).toEqual(['Game 01', 'Game 02', 'Game 03']);
-        expect(all[0].category).toEqual({ id: expect.any(Number), name: 'Strategy' });
+        expect(all[0].category).toEqual({
+            id: expect.any(Number),
+            name: 'Strategy',
+            description: 'cat',
+        });
         expect(all[0].publisher).toEqual({
             id: expect.any(Number),
             name: 'Pub One',
