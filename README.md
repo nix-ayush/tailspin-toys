@@ -49,6 +49,12 @@ more categories and by publisher. Category filters can be combined with the
 publisher and title search to narrow results further. Filtering happens in the
 browser so it works with the fully prerendered static site.
 
+Use the sort control to order the current page by title in either direction or
+by highest rating. Unrated games appear after rated games when sorting by rating.
+
+Publisher names on game details pages link to prerendered publisher pages that
+show the publisher description and all of its games.
+
 The catalog is split into six-game static pages. Use the numbered, Previous, and
 Next links below the catalog to browse additional pages; filters apply to the
 games shown on the current page.

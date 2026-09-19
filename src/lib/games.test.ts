@@ -8,7 +8,10 @@ import {
     getGames,
     getGamesPage,
     getGameById,
+    getGamesByPublisher,
+    getPublisherById,
     filterGamesByTitle,
+    sortGames,
 } from './games';
 
 async function seedGames(db: Database, count: number): Promise<void> {
@@ -62,12 +65,33 @@ describe('games data-access helpers', () => {
         });
     });
 
+    describe('sortGames', () => {
+        const games = [
+            { id: 1, title: 'Bravo', description: '', starRating: 3.5, category: null, publisher: null },
+            { id: 2, title: 'Alpha', description: '', starRating: 4.8, category: null, publisher: null },
+            { id: 3, title: 'Charlie', description: '', starRating: null, category: null, publisher: null },
+        ];
+
+        it('sorts titles in ascending and descending order', () => {
+            expect(sortGames(games, 'title-asc').map((game) => game.title)).toEqual(['Alpha', 'Bravo', 'Charlie']);
+            expect(sortGames(games, 'title-desc').map((game) => game.title)).toEqual(['Charlie', 'Bravo', 'Alpha']);
+        });
+
+        it('puts unrated games last when sorting by rating', () => {
+            expect(sortGames(games, 'rating-desc').map((game) => game.title)).toEqual(['Alpha', 'Bravo', 'Charlie']);
+        });
+    });
+
     it('returns all games ordered by title', async () => {
         await seedGames(db, 3);
         const all = await getAllGames(db);
         expect(all.map((g) => g.title)).toEqual(['Game 01', 'Game 02', 'Game 03']);
         expect(all[0].category).toEqual({ id: expect.any(Number), name: 'Strategy' });
-        expect(all[0].publisher).toEqual({ id: expect.any(Number), name: 'Pub One' });
+        expect(all[0].publisher).toEqual({
+            id: expect.any(Number),
+            name: 'Pub One',
+            description: 'pub',
+        });
     });
 
     it('returns a bounded page with deterministic metadata', async () => {
@@ -177,5 +201,20 @@ describe('games data-access helpers', () => {
     it('returns null for a non-existent game', async () => {
         await seedGames(db, 2);
         expect(await getGameById(db, 99999)).toBeNull();
+    });
+
+    it('returns a publisher and its games', async () => {
+        await seedGames(db, 2);
+        const publisher = await getPublisherById(db, 1);
+
+        expect(publisher).toEqual({ id: 1, name: 'Pub One', description: 'pub' });
+        expect((await getGamesByPublisher(db, 1)).map((game) => game.title)).toEqual([
+            'Game 01',
+            'Game 02',
+        ]);
+    });
+
+    it('returns null for a missing publisher', async () => {
+        expect(await getPublisherById(db, 99999)).toBeNull();
     });
 });

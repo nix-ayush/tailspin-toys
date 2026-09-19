@@ -65,6 +65,19 @@ const pageHref = (page: number): string => page === 1 ? '/' : `/games/${page}`;
           data-testid="game-search"
         />
       </label>
+
+      <label class="flex flex-col gap-1 text-sm text-slate-200">
+        <span>Sort games</span>
+        <select
+          name="sort"
+          class="rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-slate-100 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          data-testid="game-sort"
+        >
+          <option value="title-asc">Title (A-Z)</option>
+          <option value="title-desc">Title (Z-A)</option>
+          <option value="rating-desc">Rating (highest first)</option>
+        </select>
+      </label>
     </form>
   </div>
 
@@ -122,6 +135,7 @@ const pageHref = (page: number): string => page === 1 ? '/' : `/games/${page}`;
   const filterForm = document.querySelector<HTMLFormElement>('[data-testid="game-filters"]');
   const gameCards = Array.from(document.querySelectorAll<HTMLElement>('[data-testid="game-card"]'));
   const emptyState = document.querySelector<HTMLElement>('[data-testid="filtered-empty-state"]');
+  const gamesGrid = document.querySelector<HTMLElement>('[data-testid="games-grid"]');
 
   const applyFilters = () => {
     if (!filterForm) {
@@ -134,8 +148,10 @@ const pageHref = (page: number): string => page === 1 ? '/' : `/games/${page}`;
     );
     const selectedPublisher = filterForm.querySelector<HTMLSelectElement>('select[name="publisher"]')?.value ?? '';
     const searchQuery = filterForm.querySelector<HTMLInputElement>('input[name="search"]')?.value.trim().toLocaleLowerCase() ?? '';
+    const sortMode = filterForm.querySelector<HTMLSelectElement>('select[name="sort"]')?.value ?? 'title-asc';
     let visibleCards = 0;
 
+    const visibleCardsByMatch: HTMLElement[] = [];
     for (const card of gameCards) {
       const categoryMatches =
         selectedCategories.size === 0 || selectedCategories.has(card.dataset.categoryId ?? '');
@@ -146,11 +162,28 @@ const pageHref = (page: number): string => page === 1 ? '/' : `/games/${page}`;
       const matches = categoryMatches && publisherMatches && searchMatches;
       card.classList.toggle('hidden', !matches);
       visibleCards += matches ? 1 : 0;
+      if (matches) {
+        visibleCardsByMatch.push(card);
+      }
     }
 
+    visibleCardsByMatch.sort((left, right) => {
+      if (sortMode === 'rating-desc') {
+        const leftRating = Number(left.dataset.rating);
+        const rightRating = Number(right.dataset.rating);
+        if (Number.isNaN(leftRating) && Number.isNaN(rightRating)) return Number(left.dataset.gameId) - Number(right.dataset.gameId);
+        if (Number.isNaN(leftRating)) return 1;
+        if (Number.isNaN(rightRating)) return -1;
+        return rightRating - leftRating || Number(left.dataset.gameId) - Number(right.dataset.gameId);
+      }
+      const titleComparison = (left.dataset.gameTitle ?? '').localeCompare(right.dataset.gameTitle ?? '', undefined, { sensitivity: 'base' });
+      return (sortMode === 'title-desc' ? -titleComparison : titleComparison) || Number(left.dataset.gameId) - Number(right.dataset.gameId);
+    });
+    visibleCardsByMatch.forEach((card) => gamesGrid?.append(card));
     emptyState?.classList.toggle('hidden', visibleCards > 0);
   };
 
   filterForm?.addEventListener('change', applyFilters);
   filterForm?.querySelector('input[name="search"]')?.addEventListener('input', applyFilters);
+  applyFilters();
 </script>
