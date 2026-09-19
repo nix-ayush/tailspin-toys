@@ -29,7 +29,37 @@ export function filterGamesByTitle(gamesToFilter: Game[], query: string): Game[]
     if (normalizedQuery === '') {
         return gamesToFilter;
     }
+
     return gamesToFilter.filter((game) => game.title.toLocaleLowerCase().includes(normalizedQuery));
+}
+
+/**
+ * Returns a new game array ordered by the selected catalog sort.
+ *
+ * Unrated games are placed after rated games for rating order, while title
+ * ordering uses a case-insensitive comparison with id as a stable tie-breaker.
+ *
+ * @param gamesToSort Games to order.
+ * @param sort Sort mode to apply.
+ * @returns A sorted copy of the games.
+ */
+export function sortGames(
+    gamesToSort: Game[],
+    sort: 'title-asc' | 'title-desc' | 'rating-desc',
+): Game[] {
+    return [...gamesToSort].sort((left, right) => {
+        if (sort === 'rating-desc') {
+            if (left.starRating === null && right.starRating === null) {
+                return left.id - right.id;
+            }
+            if (left.starRating === null) return 1;
+            if (right.starRating === null) return -1;
+            return right.starRating - left.starRating || left.id - right.id;
+        }
+
+        const titleComparison = left.title.localeCompare(right.title, undefined, { sensitivity: 'base' });
+        return (sort === 'title-desc' ? -titleComparison : titleComparison) || left.id - right.id;
+    });
 }
 
 const gameSelection = {
@@ -41,6 +71,7 @@ const gameSelection = {
     categoryName: categories.name,
     publisherId: publishers.id,
     publisherName: publishers.name,
+    publisherDescription: publishers.description,
 };
 
 type GameSelectionRow = {
@@ -52,6 +83,7 @@ type GameSelectionRow = {
     categoryName: string | null;
     publisherId: number | null;
     publisherName: string | null;
+    publisherDescription: string | null;
 };
 
 function mapGame(row: GameSelectionRow): Game {
@@ -66,7 +98,11 @@ function mapGame(row: GameSelectionRow): Game {
                 : null,
         publisher:
             row.publisherId !== null && row.publisherName !== null
-                ? { id: row.publisherId, name: row.publisherName }
+                ? {
+                    id: row.publisherId,
+                    name: row.publisherName,
+                    description: row.publisherDescription,
+                }
                 : null,
     };
 }
@@ -198,9 +234,36 @@ export async function getAllCategories(db: Database): Promise<Category[]> {
  */
 export async function getAllPublishers(db: Database): Promise<Publisher[]> {
     return db
-        .select({ id: publishers.id, name: publishers.name })
+        .select({ id: publishers.id, name: publishers.name, description: publishers.description })
         .from(publishers)
         .orderBy(asc(publishers.name));
+}
+
+/**
+ * Returns a publisher and its description, or null when it does not exist.
+ *
+ * @param db Drizzle database instance, injected for production and tests.
+ * @param id Publisher id to look up.
+ * @returns The publisher record or null.
+ */
+export async function getPublisherById(db: Database, id: number): Promise<Publisher | null> {
+    const publisher = await db
+        .select({ id: publishers.id, name: publishers.name, description: publishers.description })
+        .from(publishers)
+        .where(eq(publishers.id, id))
+        .get();
+    return publisher ?? null;
+}
+
+/**
+ * Returns all games belonging to a publisher in title order.
+ *
+ * @param db Drizzle database instance, injected for production and tests.
+ * @param publisherId Publisher id to filter by.
+ * @returns Games published by the requested publisher.
+ */
+export async function getGamesByPublisher(db: Database, publisherId: number): Promise<Game[]> {
+    return getGames(db, { publisherId });
 }
 
 /** Returns a single game by id, or null when it does not exist. */

@@ -65,6 +65,26 @@ test.describe('Game Listing and Navigation', () => {
     });
   });
 
+  test('should sort games by title and rating', async ({ page }) => {
+    await page.goto('/');
+    const firstTitle = await page.getByTestId('game-title').first().textContent();
+
+    await test.step('Sort titles from Z to A', async () => {
+      await page.getByTestId('game-sort').selectOption('title-desc');
+      const titles = await page.getByTestId('game-title').allTextContents();
+      expect(titles).toEqual([...titles].sort((left, right) => right.localeCompare(left)));
+      expect(titles[0]).not.toBe(firstTitle);
+    });
+
+    await test.step('Sort by highest rating', async () => {
+      await page.getByTestId('game-sort').selectOption('rating-desc');
+      const ratings = await page.getByTestId('game-card').evaluateAll((cards) =>
+        cards.map((card) => Number(card.getAttribute('data-rating'))).filter((rating) => !Number.isNaN(rating)),
+      );
+      expect(ratings).toEqual([...ratings].sort((left, right) => right - left));
+    });
+  });
+
   test('should display games with titles on index page', async ({ page }) => {
     await test.step('Navigate to homepage', async () => {
       await page.goto('/');
@@ -147,6 +167,15 @@ test.describe('Game Listing and Navigation', () => {
       if (categoryExists) {
         await expect(page.getByTestId('game-details-category')).not.toBeEmpty();
       }
+    });
+
+    await test.step('Verify publisher link is available', async () => {
+      await expect(page.getByTestId('publisher-link')).toBeVisible();
+      await page.getByTestId('publisher-link').click();
+      await expect(page).toHaveURL(/\/publisher\/\d+/);
+      await expect(page.getByTestId('publisher-details')).toBeVisible();
+      await expect(page.getByTestId('publisher-games-grid')).toBeVisible();
+      await expect(page.getByTestId('game-card').first()).toBeVisible();
     });
   });
 
