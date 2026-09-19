@@ -1,6 +1,29 @@
 import { test, expect, type Response } from '@playwright/test';
 
 test.describe('Game Listing and Navigation', () => {
+  test('should navigate between paginated game pages', async ({ page }) => {
+    await page.goto('/');
+
+    await test.step('Verify the first page exposes pagination controls', async () => {
+      await expect(page.getByTestId('pagination')).toBeVisible();
+      await expect(page.getByTestId('pagination-page-1')).toHaveAttribute('aria-current', 'page');
+      await expect(page.getByTestId('pagination-next')).toBeVisible();
+    });
+
+    await test.step('Open the next page', async () => {
+      await page.getByTestId('pagination-next').click();
+      await expect(page).toHaveURL('/games/2');
+    });
+
+    await test.step('Verify page two and backward navigation', async () => {
+      await expect(page.getByTestId('pagination-page-2')).toHaveAttribute('aria-current', 'page');
+      await expect(page.getByTestId('pagination-previous')).toBeVisible();
+      await expect(page.getByTestId('game-card')).toHaveCount(6);
+      await page.getByTestId('pagination-previous').click();
+      await expect(page).toHaveURL('/');
+    });
+  });
+
   test('should filter games by category and publisher', async ({ page }) => {
     await page.goto('/');
     const gameCards = page.getByTestId('game-card');

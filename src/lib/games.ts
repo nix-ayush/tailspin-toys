@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray } from 'drizzle-orm';
+import { and, asc, count, eq, inArray } from 'drizzle-orm';
 import type { Database } from './db';
 import { games, categories, publishers } from '../../db/schema';
 import type { Category, Game, Publisher } from '../types/game';
@@ -7,6 +7,14 @@ import type { Category, Game, Publisher } from '../types/game';
 export interface GameFilters {
     categoryIds?: number[];
     publisherId?: number;
+}
+
+export interface GamePage {
+    games: Game[];
+    page: number;
+    pageSize: number;
+    totalGames: number;
+    totalPages: number;
 }
 
 const gameSelection = {
@@ -74,6 +82,10 @@ function applyFilters<T extends ReturnType<typeof baseGamesQuery>>(
     return conditions.length > 0 ? query.where(and(...conditions)) as T : query;
 }
 
+function baseGamesCountQuery(db: Database) {
+    return db.select({ count: count() }).from(games);
+}
+
 /**
  * Returns games matching optional category and publisher filters in title order.
  *
@@ -84,6 +96,54 @@ function applyFilters<T extends ReturnType<typeof baseGamesQuery>>(
 export async function getGames(db: Database, filters: GameFilters = {}): Promise<Game[]> {
     const rows = await applyFilters(baseGamesQuery(db), filters).orderBy(asc(games.title));
     return rows.map(mapGame);
+}
+
+/**
+ * Returns one deterministic page of filtered games and its pagination metadata.
+ *
+ * @param db Drizzle database instance, injected for production and tests.
+ * @param page One-based page number; values below one are treated as page one.
+ * @param pageSize Number of games per page.
+ * @param filters Optional category and publisher criteria.
+ * @returns Games for the requested page and total page metadata.
+ */
+export async function getGamesPage(
+    db: Database,
+    page: number,
+    pageSize: number,
+    filters: GameFilters = {},
+): Promise<GamePage> {
+    const safePageSize = Math.max(1, Math.floor(pageSize));
+    const countQuery = baseGamesCountQuery(db);
+    const countConditions = [];
+    if (filters.categoryIds !== undefined) {
+        countConditions.push(
+            filters.categoryIds.length === 0
+                ? eq(games.id, -1)
+                : inArray(games.categoryId, filters.categoryIds),
+        );
+    }
+    if (filters.publisherId !== undefined) {
+        countConditions.push(eq(games.publisherId, filters.publisherId));
+    }
+    const countRow = await (countConditions.length > 0
+        ? countQuery.where(and(...countConditions))
+        : countQuery).get();
+    const totalGames = countRow?.count ?? 0;
+    const totalPages = Math.max(1, Math.ceil(totalGames / safePageSize));
+    const safePage = Math.min(Math.max(1, Math.floor(page)), totalPages);
+    const rows = await applyFilters(baseGamesQuery(db), filters)
+        .orderBy(asc(games.title))
+        .limit(safePageSize)
+        .offset((safePage - 1) * safePageSize);
+
+    return {
+        games: rows.map(mapGame),
+        page: safePage,
+        pageSize: safePageSize,
+        totalGames,
+        totalPages,
+    };
 }
 
 /**
