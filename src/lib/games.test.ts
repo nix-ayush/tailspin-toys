@@ -8,6 +8,7 @@ import {
     getGames,
     getGamesPage,
     getGameById,
+    filterGamesByTitle,
 } from './games';
 
 async function seedGames(db: Database, count: number): Promise<void> {
@@ -37,6 +38,28 @@ describe('games data-access helpers', () => {
 
     beforeEach(async () => {
         db = await createTestDatabase();
+    });
+
+    describe('filterGamesByTitle', () => {
+        it('matches titles case-insensitively and ignores surrounding whitespace', () => {
+            const results = filterGamesByTitle(
+                [
+                    { id: 1, title: 'Code Quest', description: '', starRating: null, category: null, publisher: null },
+                    { id: 2, title: 'Garden Tactics', description: '', starRating: null, category: null, publisher: null },
+                ],
+                '  CODE  ',
+            );
+
+            expect(results.map((game) => game.title)).toEqual(['Code Quest']);
+        });
+
+        it('returns all games for a blank query', () => {
+            const games = [
+                { id: 1, title: 'Code Quest', description: '', starRating: null, category: null, publisher: null },
+            ];
+
+            expect(filterGamesByTitle(games, '   ')).toBe(games);
+        });
     });
 
     it('returns all games ordered by title', async () => {

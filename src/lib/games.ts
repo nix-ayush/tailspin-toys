@@ -17,6 +17,21 @@ export interface GamePage {
     totalPages: number;
 }
 
+/**
+ * Filters games by a case-insensitive title substring.
+ *
+ * @param gamesToFilter Games to search.
+ * @param query Search text; blank text returns every game.
+ * @returns Games whose titles contain the normalized query.
+ */
+export function filterGamesByTitle(gamesToFilter: Game[], query: string): Game[] {
+    const normalizedQuery = query.trim().toLocaleLowerCase();
+    if (normalizedQuery === '') {
+        return gamesToFilter;
+    }
+    return gamesToFilter.filter((game) => game.title.toLocaleLowerCase().includes(normalizedQuery));
+}
+
 const gameSelection = {
     id: games.id,
     title: games.title,

@@ -44,10 +44,10 @@ npm run preview
 
 ## Filtering games
 
-The home page supports filtering the catalog by one or more categories and by
-publisher. Category filters can be combined, and the publisher filter can be
-used with them to narrow results further. Filtering happens in the browser so
-it works with the fully prerendered static site.
+The home page supports searching by title and filtering the catalog by one or
+more categories and by publisher. Category filters can be combined with the
+publisher and title search to narrow results further. Filtering happens in the
+browser so it works with the fully prerendered static site.
 
 The catalog is split into six-game static pages. Use the numbered, Previous, and
 Next links below the catalog to browse additional pages; filters apply to the
