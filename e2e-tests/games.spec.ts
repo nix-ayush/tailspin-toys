@@ -169,6 +169,11 @@ test.describe('Game Listing and Navigation', () => {
       }
     });
 
+    await test.step('Verify related descriptions are rendered', async () => {
+      await expect(page.getByTestId('game-details-category-description')).not.toBeEmpty();
+      await expect(page.getByTestId('game-details-publisher-description')).not.toBeEmpty();
+    });
+
     await test.step('Verify publisher link is available', async () => {
       await expect(page.getByTestId('publisher-link')).toBeVisible();
       await page.getByTestId('publisher-link').click();

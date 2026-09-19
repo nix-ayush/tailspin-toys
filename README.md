@@ -55,6 +55,9 @@ by highest rating. Unrated games appear after rated games when sorting by rating
 Publisher names on game details pages link to prerendered publisher pages that
 show the publisher description and all of its games.
 
+Game detail pages also show available category and publisher descriptions,
+omitting either section when no description is provided.
+
 The catalog is split into six-game static pages. Use the numbered, Previous, and
 Next links below the catalog to browse additional pages; filters apply to the
 games shown on the current page.

@@ -69,6 +69,7 @@ const gameSelection = {
     starRating: games.starRating,
     categoryId: categories.id,
     categoryName: categories.name,
+    categoryDescription: categories.description,
     publisherId: publishers.id,
     publisherName: publishers.name,
     publisherDescription: publishers.description,
@@ -81,6 +82,7 @@ type GameSelectionRow = {
     starRating: number | null;
     categoryId: number | null;
     categoryName: string | null;
+    categoryDescription: string | null;
     publisherId: number | null;
     publisherName: string | null;
     publisherDescription: string | null;
@@ -94,7 +96,11 @@ function mapGame(row: GameSelectionRow): Game {
         starRating: row.starRating,
         category:
             row.categoryId !== null && row.categoryName !== null
-                ? { id: row.categoryId, name: row.categoryName }
+                ? {
+                    id: row.categoryId,
+                    name: row.categoryName,
+                    description: row.categoryDescription,
+                }
                 : null,
         publisher:
             row.publisherId !== null && row.publisherName !== null
